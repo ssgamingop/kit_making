@@ -15,6 +15,7 @@ class KiteApp:
         
         self.detector = HandDetector(max_hands=1)
         self.prev_hand_pos = None # For smoothing
+        self.is_pinch_active = False # State for hysteresis
         
         # State
         self.objects = [] # List of placed objects
@@ -150,11 +151,23 @@ class KiteApp:
             
             # Pinch Detection (Thumb 4 and Index 8)
             length, _, _ = self.detector.find_distance(4, 8)
-            is_pinching = length < 40 # Threshold for pinch
+            
+            # Hysteresis Logic to prevent glitching
+            # Harder to trigger (30), harder to lose (50)
+            if not self.is_pinch_active and length < 30:
+                self.is_pinch_active = True
+            elif self.is_pinch_active and length > 50:
+                self.is_pinch_active = False
+                
+            is_pinching = self.is_pinch_active
             
             # Visual feedback for pinch
             if is_pinching:
                 cv2.circle(img, hand_pos, 10, (0, 0, 255), -1) # Red cursor when pinching
+                # Draw line between fingers to show connection
+                x1, y1 = self.detector.lm_list[4][1], self.detector.lm_list[4][2]
+                x2, y2 = self.detector.lm_list[8][1], self.detector.lm_list[8][2]
+                cv2.line(img, (x1, y1), (x2, y2), (0, 0, 255), 2)
             else:
                 cv2.circle(img, hand_pos, 10, (0, 255, 0), -1) # Green cursor otherwise
             cv2.circle(img, hand_pos, 15, (255, 255, 255), 2)
