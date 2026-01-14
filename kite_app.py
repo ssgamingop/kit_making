@@ -172,38 +172,60 @@ class KiteApp:
                 cv2.circle(img, hand_pos, 10, (0, 255, 0), -1) # Green cursor otherwise
             cv2.circle(img, hand_pos, 15, (255, 255, 255), 2)
             
-            # Handle Color Grabbing via Pinch
+            # Handle Grabbing via Pinch
             if is_pinching:
                 if not self.current_object:
-                    # Check if pinching over a color button
+                    # 1. Check Color Palette
                     for btn in self.color_buttons:
                         if btn.is_hover(hand_pos[0], hand_pos[1]):
-                            # SPAWN COLOR BLOB
                             self.current_object = DraggableObject(len(self.objects), "color_blob")
-                            btn_id = btn.action_id
-                            # Extract color from button (it's the 'color' attr) but we used action_id matching in mouse click
-                            # Let's trust the button color or map it
                             self.current_object.color = btn.color
                             self.message = "Pinch & Drag Color!"
-                            break
+                            return img # Return early to smooth interaction
+
+                    # 2. Check Sidebar Tools (Sticks, Paper)
+                    for btn in self.buttons:
+                        if btn.action_id in ["stick1", "stick2", "paper"] and btn.is_hover(hand_pos[0], hand_pos[1]):
+                            # Order Logic Check
+                            has_stick1 = any(o.type == 'stick1' for o in self.objects)
+                            has_stick2 = any(o.type == 'stick2' for o in self.objects)
+                            
+                            if btn.action_id == "stick2" and not has_stick1:
+                                self.message = "Need Stick 1 first!"
+                                return img
+                            if btn.action_id == "paper" and not (has_stick1 and has_stick2):
+                                self.message = "Need both sticks first!"
+                                return img
+
+                            self.current_object = DraggableObject(len(self.objects), btn.action_id)
+                            if btn.action_id == 'paper':
+                                self.current_object.color = self.kite_color
+                            self.message = f"Grabbed {btn.text}!"
+                            
             else:
-                # Released Pinch
-                if self.current_object and self.current_object.type == 'color_blob':
-                    # Drop Logic
-                    dropped = False
-                    for obj in self.objects:
-                        if obj.type == 'paper':
-                             dist = np.linalg.norm(np.array(self.current_object.pos) - np.array(obj.pos))
-                             if dist < 120: # If near paper
-                                 obj.color = self.current_object.color
-                                 self.message = "Colored with Style!"
-                                 dropped = True
-                                 break
-                    
-                    if not dropped:
-                        self.message = "Released Color"
-                    
-                    self.current_object = None # Destroy blob
+                # Released Pinch (Drop/Place)
+                if self.current_object:
+                    if self.current_object.type == 'color_blob':
+                        # Drop Color
+                        dropped = False
+                        for obj in self.objects:
+                            if obj.type == 'paper':
+                                 dist = np.linalg.norm(np.array(self.current_object.pos) - np.array(obj.pos))
+                                 if dist < 120: 
+                                     obj.color = self.current_object.color
+                                     self.message = "Colored with Style!"
+                                     dropped = True
+                                     break
+                        
+                        if not dropped: self.message = "Released Color"
+                        self.current_object = None 
+
+                    else:
+                        # Place Stick/Paper
+                        self.current_object.place()
+                        self.objects.append(self.current_object)
+                        self.current_object = None
+                        self.message = "Placed!"
 
         else:
             self.prev_hand_pos = None # Reset if hand lost

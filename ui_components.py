@@ -155,6 +155,10 @@ class DraggableObject:
                 (cx + size + 15, cy + 10)
             ], np.int32)
             cv2.fillPoly(img, [rt_pts], tassel_color)
+            
+            # Central Knot (Tie) - Black dot where sticks cross
+            cv2.circle(img, (cx, cy), 5, (20, 20, 20), -1)
+            cv2.circle(img, (cx, cy), 6, (200, 200, 200), 1)
 
         elif self.type == 'color_blob':
             # Paint bucket splash look
