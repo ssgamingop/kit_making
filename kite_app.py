@@ -211,16 +211,16 @@ class KiteApp:
         # Draw UI
         draw_transparent_rect(img, (0, 0), (250, 720), (30, 30, 30), 0.6) # Sidebar bg
         
-        # Festive Text with Glow
+        # Festive Text with Glow (Moved to Bottom)
         text = "Happy Makar Sankranti!"
         font = cv2.FONT_HERSHEY_TRIPLEX
         scale = 1.0
-        pos = (380, 50)
+        pos = (350, 680)
         # Shadow/Glow
         cv2.putText(img, text, (pos[0]+2, pos[1]+2), font, scale, (0, 0, 0), 4) # Black outline
         cv2.putText(img, text, pos, font, scale, (0, 255, 255), 2) # Yellow text
         
-        cv2.putText(img, "From Somyajeet", (pos[0]+150, pos[1]+40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (240, 240, 240), 1)
+        cv2.putText(img, "From Somyajeet", (pos[0]+200, pos[1]+30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (240, 240, 240), 1)
         
         for btn in self.buttons:
             btn.draw(img)
