@@ -241,9 +241,13 @@ class KiteApp:
         
         # Handle Screenshot
         if self.screenshot_pending:
-            cv2.imwrite(f"kite_screenshot_{int(cv2.getTickCount())}.jpg", img)
+            import os
+            if not os.path.exists("screenshots"):
+                os.makedirs("screenshots")
+            filename = f"screenshots/kite_{int(cv2.getTickCount())}.jpg"
+            cv2.imwrite(filename, img)
             self.screenshot_pending = False
-            self.message = "Saved!"
+            self.message = f"Saved to {filename}!"
             
         return img
 
